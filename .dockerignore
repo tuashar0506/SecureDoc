@@ -1,0 +1,35 @@
+# Never send Git history, local environments, or generated output to Docker.
+.git/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+*.spec
+
+# Exclude user data and potential secrets from the build context.
+.env
+.env.*
+*.secret
+data/
+keys/
+private_keys/
+certificates/
+revocation/
+audit_logs/
+*.key
+*.pem
+*.p12
+*.pfx
+*.sdoc
+*.log
+*.tmp
+*.bak

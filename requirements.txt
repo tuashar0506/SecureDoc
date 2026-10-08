@@ -1,0 +1,2 @@
+# Install the project and Phase 1 development tools inside the active .venv.
+-e .[dev]

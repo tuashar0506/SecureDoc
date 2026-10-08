@@ -1,0 +1,41 @@
+# Python environments and generated code
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+*.spec
+
+# Test, lint, and editor output
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local configuration and potentially sensitive application data
+.env
+.env.*
+*.secret
+data/
+keys/
+private_keys/
+certificates/
+revocation/
+audit_logs/
+*.key
+*.pem
+*.p12
+*.pfx
+*.sdoc
+*.log
+*.tmp
+*.bak
