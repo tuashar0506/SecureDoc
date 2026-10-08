@@ -11,14 +11,15 @@ design, **not completed functionality**.
 
 | Status | Capability |
 | --- | --- |
-| Implemented | Foundation, Docker development/test image, RSA-3072 key generation and password-encrypted private-key PEM storage |
+| Implemented | Foundation, Docker development/test image, encrypted RSA-3072 keys, local X.509 root and user-certificate issuance |
 | In progress | Cryptographic core and automated security tests |
-| Planned | Multiple-identity management, local X.509 CA and certificate validation |
+| Planned | Multiple-identity management and certificate trust, expiry and revocation validation |
 | Planned | RSA-PSS/SHA-256 signing, AES-256-GCM and RSA-OAEP hybrid encryption |
 | Planned | Safe `.sdoc` packages, revocation checks, authenticated-request replay protection |
 | Planned | Optional X25519/HKDF exchange, service layer, GUI, Security Lab and audit logging |
 
-There is **no** document encryption, signing, CA, identity manager, or GUI yet.
+There is **no** document encryption, signing, trust validation, identity manager,
+or GUI yet. Creating a CA certificate does **not** make it trusted.
 
 ## Security goals and design (planned)
 
@@ -54,6 +55,8 @@ coordinate workflows; `securedoc/gui/` will contain the future interface;
 The entry point `app.py` currently prints a development status message only.
 `securedoc/crypto/key_manager.py` implements RSA-3072 key generation and
 encrypted key storage, independently of a GUI or identity database.
+`securedoc/crypto/certificates.py` creates and issues real X.509 certificates;
+see [the PKI design notes](docs/PKI.md) for the implemented checks and limits.
 
 ## Key management (implemented library API)
 
@@ -111,8 +114,9 @@ docker run --rm --network none --read-only --tmpfs /tmp:rw,nosuid,nodev,size=64m
 
 The first `docker run` prints the same status as `python app.py`;
 the second should pass the foundation and key-management tests. The image
-runs as a non-root user; project dependencies live inside its `/opt/venv`. `.dockerignore`
-excludes local keys, documents, `.venv` and Git history from the build context.
+runs as a non-root user; project dependencies live inside its `/opt/venv`.
+`.dockerignore` excludes local keys, documents, `.venv` and Git history from
+the build context.
 Do not mount host keys, private documents or the Docker socket into the image.
 Docker isolation is not a replacement for cryptographic security, and access
 to the Docker daemon is security-sensitive. A GUI-in-Docker workflow is not
@@ -153,8 +157,8 @@ python -m ruff check .
 python -m black --check .
 ```
 
-At this stage, foundation and key-management tests exist; coverage does
-**not** establish cryptographic security. CI across Ubuntu,
+At this stage, foundation, key-management and X.509 issuance tests exist;
+coverage does **not** establish cryptographic security. CI across Ubuntu,
 Windows and macOS is planned; no CI result is claimed yet.
 
 ## Security Lab (planned)
@@ -210,8 +214,8 @@ revocation store; it is not an Internet-wide revocation service.
 
 ## Known limitations
 
-- Only key generation and PEM key storage work; no document security workflow
-  exists yet. This software is not audited or production-ready.
+- Only key generation, PEM key storage and X.509 certificate issuance work;
+  no document security workflow exists yet. This is not production-ready.
 - Certificate verification, revocation, replay tracking and forward secrecy are
   design goals, not implemented guarantees.
 - No GUI or installer; Python 3.14/CustomTkinter and cross-platform behavior
@@ -221,7 +225,7 @@ revocation store; it is not an Internet-wide revocation service.
 
 ## Roadmap
 
-1. Key storage and tests (implemented); X.509 CA and certificate validation (planned).
+1. Key storage and X.509 issuance (implemented); trust validation (planned).
 2. Signatures, AES-GCM, hybrid encryption and validated `.sdoc` packages.
 3. Revocation, replay protection and optional X25519 exchange.
 4. Service layer, GUI and Security Lab; audit logs.

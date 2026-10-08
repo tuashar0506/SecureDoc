@@ -11,3 +11,7 @@ class KeyManagementError(SecureDocError):
 
 class IncorrectPasswordError(KeyManagementError):
     """An encrypted private key could not be unlocked with this password."""
+
+
+class CertificateError(SecureDocError):
+    """Certificate creation, parsing, or issuance was rejected."""

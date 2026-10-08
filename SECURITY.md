@@ -1,8 +1,9 @@
 # Security policy
 
-**Status:** Foundation only. SecureDoc Nepal is coursework, not audited or
-production-ready. Do not use it for sensitive documents or rely on it for
-identity verification while the security features remain unimplemented.
+**Status:** RSA key storage and local X.509 issuance are implemented. SecureDoc
+Nepal is coursework, not audited or production-ready. Trust validation,
+revocation and document workflows are not implemented. Do not use it for
+sensitive documents or real-world identity verification.
 
 ## Reporting a vulnerability
 
