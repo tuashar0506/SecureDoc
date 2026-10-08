@@ -1,9 +1,10 @@
 # Security policy
 
-**Status:** RSA key storage and local X.509 issuance are implemented. SecureDoc
-Nepal is coursework, not audited or production-ready. Trust validation,
-revocation and document workflows are not implemented. Do not use it for
-sensitive documents or real-world identity verification.
+**Status:** Local signed/encrypted `.sdoc` workflows and pinned direct-issuer
+validation are implemented. Revocation checks, real-world identity vetting,
+GUI display testing on this host, and native package verification are not.
+SecureDoc Nepal is coursework, not audited or production-ready. Do not use it
+for sensitive documents or real-world identity verification.
 
 ## Reporting a vulnerability
 
@@ -15,9 +16,9 @@ in a public issue. No response time or bounty is promised.
 
 ## Scope and limitations
 
-Future cryptographic features will need tests and independent review. A valid
-signature alone cannot establish real-world identity or legal non-repudiation.
-Local CA trust, revocation database integrity, secure endpoints, strong
-passwords and correct clock settings will all matter. A compromised CA key
+Local root pinning checks the key and chain only; there is no automatic
+revocation enforcement. A valid signature alone cannot establish real-world
+identity or legal non-repudiation. Secure endpoints, strong passwords,
+correct clock settings and CA key custody all matter. A compromised CA key
 or endpoint can defeat the intended trust model. Static RSA file encryption
-does not provide forward secrecy. See the README for the current feature status.
+does not provide forward secrecy. See the README for actual feature status.

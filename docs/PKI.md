@@ -1,8 +1,11 @@
-# Local X.509 PKI: issuance stage
+# Local X.509 PKI: issuance and pinned-chain validation
 
 **Status:** Real root and user-certificate issuance is implemented in
-`securedoc/crypto/certificates.py`. Trust-chain validation, revocation and GUI
-workflows are **not** implemented. Do not use generated certificates as evidence
+`securedoc/crypto/certificates.py`. Direct-issuer chain, date, signature and
+purpose checks under a manually pinned root are in `securedoc/security/trust.py`.
+Revocation enforcement and independent identity verification are **not**
+implemented. The Tk interface exists but its display behavior is not tested
+in this Linux Python environment. Do not use generated certificates as evidence
 of real-world identity until an explicit, documented identity-verification
 process and trust decision exist.
 
@@ -14,7 +17,7 @@ critical Basic Constraints mark it as a CA with no intermediate CA children.
 Critical Key Usage allows certificate and CRL signing. The SHA-256 signature is
 RSA-PSS. The root is **not** trusted by an operating system merely because it
 is self-signed: the application must explicitly select and protect an authentic
-root certificate in a later trust-validation stage.
+root certificate using a fingerprint confirmed through a separate channel.
 
 `issue_user_certificate()` checks that the presented root's public key matches
 the signing private key, its self-signature verifies, it is currently valid,
@@ -27,9 +30,11 @@ The password-encrypted CA private-key **storage** belongs to the existing
 
 `serialize_certificate()` returns public PEM, `load_certificate()` only parses
 a bounded PEM, and `certificate_fingerprint()` returns a SHA-256 fingerprint.
-**Parsing and fingerprinting never mean trusted.** A later validator must check
-trusted anchor, issuer, signature, dates, purpose and local revocation status,
-and keep signature validity separate from signer trust.
+**Parsing and fingerprinting never mean trusted.** The current direct-issuer
+validator checks a caller-provided SHA-256 root pin, self-signature, issuer,
+signature, dates, RSA strength and key usage. A caller may pass revoked serials
+in memory, but no persistent revocation store or CRL is enforced. Therefore
+validation alone does not establish current non-revocation or real-world identity.
 
 ## In-memory learning example
 
@@ -53,10 +58,11 @@ whether a recipient has decided to trust that root or Alice's real identity.
 - Issuance does not verify the identity of the named person or organization.
 - Compromise of the CA private key defeats this CA's identity assertions.
 - A weak private-key password reduces protection even when stored encrypted.
-- There is no CRL, revocation store, chain builder, identity database or GUI.
+- There is no CRL, persistent revocation store, intermediate chain builder,
+  or identity database. The GUI has not been display-tested on all platforms.
 - Generated certificates in tests remain in memory. No private-key PEM or
   generated certificates are committed as fixtures.
 
 Run `python -m pytest tests/test_certificates.py -v` to exercise genuine X.509
 issuance and rejected CA/key/subject inputs. Do not interpret passing issuance
-tests as proof that document signatures or identity verification work yet.
+tests as proof of real-world identity verification.

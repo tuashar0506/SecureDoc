@@ -1,250 +1,135 @@
 # SecureDoc Nepal
 
-**Secure document sharing, signing, encryption and verification — under development.**
+**Educational document signing and encryption with a CLI and native Tk GUI.**
 
-Coursework project for **ST6051CEM Practical Cryptography**. This repository is
-currently a project foundation, not a usable security product. Do not use it to
-protect real documents or secrets. Security claims below describe the intended
-design, **not completed functionality**.
+ST6051CEM Practical Cryptography coursework, **not audited or suitable for real
+secrets**. Windows/macOS compatibility and packaged GUI launches must be checked
+on native hardware before relying on them; a workflow file is not a test result.
 
-## Status and features
+## Feature status
 
 | Status | Capability |
 | --- | --- |
-| Implemented | Foundation, Docker development/test image, encrypted RSA-3072 keys, local X.509 root and user-certificate issuance |
-| In progress | Cryptographic core and automated security tests |
-| Configured, not yet verified on GitHub | Cross-platform test/lint CI workflow; no packages or releases |
-| Planned | Multiple-identity management and certificate trust, expiry and revocation validation |
-| Planned | RSA-PSS/SHA-256 signing, AES-256-GCM and RSA-OAEP hybrid encryption |
-| Planned | Safe `.sdoc` packages, revocation checks, authenticated-request replay protection |
-| Planned | Optional X25519/HKDF exchange, service layer, GUI, Security Lab and audit logging |
+| Implemented and locally tested | Password-encrypted RSA-3072 keys; X.509 local root and user issuance; SHA-256 root fingerprint pinning and direct-issuer/validity/key-usage checks; RSA-PSS/SHA-256 package signatures; fresh AES-256-GCM document encryption and RSA-OAEP/SHA-256 recipient key wrapping; bounded `.sdoc` parser; exclusive file writes; shared CLI/file workflows |
+| Implemented, display unverified on this host | Native Tk/ttk desktop interface using those workflows (this Linux Python has no Tkinter) |
+| Configured, not verified by this change | Native Linux/Windows/macOS tests and PyInstaller builds; tag-triggered **draft prereleases only** |
+| Not implemented | Online identity verification, persistent revocation/CRL enforcement, authenticated network request replay tracking, X25519 forward secrecy, multi-recipient encryption, native code signing/notarization, Security Lab |
 
-There is **no** document encryption, signing, trust validation, identity manager,
-or GUI yet. Creating a CA certificate does **not** make it trusted.
+Certificate issuance, a valid document signature, and a selected root fingerprint
+**do not prove** who actually used a key, that a root was honestly distributed,
+or that a certificate has not been revoked. No legal non-repudiation is claimed.
+Static RSA file encryption does **not** provide forward secrecy. The format is
+one signed and encrypted document for one recipient; metadata (original filename,
+sender certificate and recipient fingerprint) is **visible** in the package,
+though signed and authenticated. Do not commit generated keys, certificates,
+documents, `.sdoc` files or audit data.
 
-## Security goals and design (planned)
+## Installation
 
-- **Confidentiality:** encrypt each document under a new random AES-256 key;
-  protect that key for the intended recipient with RSA-OAEP/SHA-256.
-- **Integrity:** AES-GCM authenticates encrypted data; RSA-PSS/SHA-256 signs
-  document data. A hash alone is not encryption or proof of authorship.
-- **Authentication:** verify the signature *and* the signer certificate's chain,
-  validity interval, trusted root and local revocation status before trusting
-  an identity. A cryptographically valid signature does not imply trust.
-- **Non-repudiation:** a signature links data to possession of a private key;
-  it cannot prove who physically operated the device, rule out key compromise,
-  or by itself establish legal non-repudiation.
-- **Replay resistance:** only authenticated requests where repeating an
-  operation matters will use a message ID, timestamp and persistent replay
-  tracking. Merely opening a document twice is not an attack.
-- **Optional forward secrecy:** an advanced X25519/HKDF exchange will be
-  separately specified and tested. Static RSA-OAEP file encryption does
-  **not** provide forward secrecy; ephemeral keys alone do not erase stored
-  plaintext or protect compromised endpoints.
-
-Cryptography will use the established Python `cryptography` library rather than
-home-grown primitives. Private keys must be encrypted at rest with a password;
-the implemented PEM format and password rules are documented below.
-
-## Architecture
-
-`securedoc/crypto/` will hold primitives and certificate issuance;
-`securedoc/security/` will handle validation, revocation and replay controls;
-`securedoc/models/` will validate package data; `securedoc/services/` will
-coordinate workflows; `securedoc/gui/` will contain the future interface;
-`securedoc/utils/` will contain safe, shared helpers. Tests live in `tests/`.
-The entry point `app.py` currently prints a development status message only.
-`securedoc/crypto/key_manager.py` implements RSA-3072 key generation and
-encrypted key storage, independently of a GUI or identity database.
-`securedoc/crypto/certificates.py` creates and issues real X.509 certificates;
-see [the PKI design notes](docs/PKI.md) for the implemented checks and limits.
-
-## Key management (implemented library API)
-
-`generate_rsa_private_key()` generates an RSA-3072 private key; its public
-counterpart is obtained using `.public_key()`. `save_private_key()` writes an
-encrypted PKCS#8 PEM using `cryptography`'s `BestAvailableEncryption`. The
-password must contain at least 12 characters; length alone does not guarantee
-a strong password. Only you can supply that password; it is never saved.
-`load_private_key()` unlocks the PEM. `save_public_key()` and
-`load_public_key()` work with a public PEM, which contains no private material.
-New files are created without overwriting existing files; on POSIX systems,
-private-key files are created with owner-only permissions (`0600`). Windows
-file ACLs depend on the user's operating-system account and must be checked
-before using real keys. Avoid putting real private keys in this coursework
-repository, even in ignored directories. Key generation and saving are not
-connected to `app.py` yet; run `python -m pytest tests/test_keys.py -v` to
-exercise both successful and failure cases.
-
-## Install and run (foundation)
-
-Use an isolated environment; do not install project dependencies globally.
-Python 3.11+ is configured. Key-management tests passed in a Linux Docker
-image with Python 3.14.8; Python 3.14.7 on CachyOS and GUI compatibility
-still need validation. Commands below start in the project directory.
-
-### Linux (Fish shell)
+Use Python 3.11+ with native Tkinter support for the GUI. Tkinter is distributed
+with most python.org Windows/macOS installers; some Linux Python builds need a
+matching system Tk installation. The CLI and tests do not need Tkinter. In Fish:
 
 ```fish
 cd ~/securedoc-nepal
-if not test -d .venv
-    virtualenv .venv
-end
-source .venv/bin/activate.fish
+source .venv/bin/activate.fish  # if the environment already exists
 python -m pip install -r requirements.txt
-python app.py
+python app.py --help
+python app.py gui
 ```
 
-If `.venv` already exists, **do not recreate it**: just activate it. For Bash,
-use `source .venv/bin/activate` instead. Check `which python` points into `.venv`.
+If there is no `.venv`, create one with `python3 -m venv .venv` first. For Bash,
+use `source .venv/bin/activate`; for Windows PowerShell, use
+`.\.venv\Scripts\Activate.ps1`. `python app.py` also launches the GUI. A
+missing Tk error means the **Python installation** needs Tk support; do not
+attempt to install Tkinter from PyPI. There is no configured application data
+directory or auto-saved password: file paths are explicitly chosen by users.
 
-### Docker development/test option
+## CLI quick start
 
-Docker is optional. It provides a repeatable **CLI test environment**, not a
-working security product or a GUI. Run from the repository root with a trusted
-Docker daemon; image builds download Python packages from package repositories.
-The default image uses Python 3.13. Key-management tests have also passed in
-a Python 3.14.8 Linux Docker image; this does not prove GUI or native Windows
-and macOS compatibility.
+Every key password is entered interactively with `getpass`; **never** put it in
+shell arguments or scripts. Save files outside the repository, for example in
+your home directory. The commands below assume the shell is in a directory for
+**new, unused** output paths. Replace `PIN` with a 64-character hex SHA-256
+root fingerprint confirmed through a trusted *independent* channel.
 
 ```sh
-docker build -t securedoc-nepal:dev .
-docker run --rm --network none --read-only --tmpfs /tmp:rw,nosuid,nodev,size=64m --cap-drop ALL --security-opt no-new-privileges securedoc-nepal:dev
-docker run --rm --network none --read-only --tmpfs /tmp:rw,nosuid,nodev,size=64m --cap-drop ALL --security-opt no-new-privileges securedoc-nepal:dev python -m pytest -p no:cacheprovider -v
+python app.py init-ca --key root.key --cert root.pem
+python app.py fingerprint root.pem
+python app.py issue --root-key root.key --root-cert root.pem --root-pin PIN --name Alice --organization Demo --key alice.key --cert alice.pem
+python app.py issue --root-key root.key --root-cert root.pem --root-pin PIN --name Bob --organization Demo --key bob.key --cert bob.pem
+python app.py seal report.txt report.sdoc --signer-key alice.key --signer-cert alice.pem --recipient-cert bob.pem --root-cert root.pem --root-pin PIN
+python app.py open report.sdoc restored.txt --recipient-key bob.key --recipient-cert bob.pem --root-cert root.pem --root-pin PIN
 ```
 
-The first `docker run` prints the same status as `python app.py`;
-the second should pass the foundation and key-management tests. The image
-runs as a non-root user; project dependencies live inside its `/opt/venv`.
-`.dockerignore` excludes local keys, documents, `.venv` and Git history from
-the build context.
-Do not mount host keys, private documents or the Docker socket into the image.
-Docker isolation is not a replacement for cryptographic security, and access
-to the Docker daemon is security-sensitive. A GUI-in-Docker workflow is not
-provided or tested.
+Use `python app.py <command> --help` for individual options. The GUI follows
+the same four steps: Create CA → Issue identity → Protect → Open. In the GUI,
+"Show file fingerprint" does not automatically trust the root; enter the pin
+you confirmed independently. All saved outputs refuse to overwrite existing
+files, including decrypted documents. A package is limited to a 16 MiB
+plaintext and a 24 MiB `.sdoc` file; both CLI and GUI use the same bounds.
 
-### Windows (PowerShell)
+**Protect your environment:** Use strong, unique key passwords, separate
+storage/backups for the CA key, and secure file permissions. On POSIX, encrypted
+keys and recovered plaintext are created mode `0600`. Windows permissions
+depend on the account and filesystem ACLs. A wrong password, wrong identity,
+untrusted pin, invalid signature, malformed package or failed AES-GCM tag
+rejects the open operation before any decrypted output is written.
 
-```powershell
-cd path\to\securedoc-nepal
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-python app.py
-```
+## Security design and limitations
 
-### macOS (default shell)
+The `.sdoc` JSON has a strict field set, version, bounded lengths and duplicate
+key rejection. Sender certificate, recipient fingerprint, nonce, encrypted AES
+key and filename are signed with RSA-PSS/SHA-256 along with the AES-GCM
+ciphertext. Metadata is also AES-GCM additional authenticated data. The random
+AES-256 key is wrapped to the recipient with RSA-OAEP/SHA-256. Opening checks
+the caller-supplied root fingerprint and the root's self-signature, certificate
+dates/usage, issuer signature and signing certificate, then checks the package
+signature and decrypts. This is **local cryptographic validation**, not a
+complete PKI trust service: certificates can be revoked without this version
+knowing, and the CA's real-world vetting is out of scope. For the issuance
+model see [docs/PKI.md](docs/PKI.md); for build limits see
+[docs/CI.md](docs/CI.md) and [SECURITY.md](SECURITY.md).
+
+There is no network API, so replay protection for authenticated *requests* is
+not applicable here; opening the same stored document twice is allowed.
+No forward secrecy, multi-recipient support, CA key rotation, OS trust-store
+integration, keychain, online revocation, or legal identity guarantee exists.
+File metadata may reveal who is communicating. An already-compromised device,
+weak password, compromised CA or dishonest trusted pin defeats protections.
+
+## Tests and development
 
 ```sh
-cd /path/to/securedoc-nepal
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-python app.py
-```
-
-The expected current output is `SecureDoc Nepal: key management ready; document
-workflows are not implemented yet.` This is **not** an encryption test.
-
-## Tests and development checks
-
-Once the development requirements are installed into `.venv`:
-
-```sh
-python -m pytest
 python -m pytest -v
 python -m pytest --cov=securedoc --cov-report=term-missing
 python -m ruff check .
 python -m black --check .
 ```
 
-At this stage, foundation, key-management and X.509 issuance tests exist;
-coverage does **not** establish cryptographic security. A
-[test-only CI workflow](docs/CI.md) is configured for native Ubuntu, Windows
-and macOS runners on Python 3.11, 3.13 and 3.14, with Ruff and Black on Ubuntu.
-No GitHub Actions run or cross-platform result is claimed until the workflow
-actually runs and its jobs are inspected. No desktop packaging or automated
-release is configured while the application remains a status placeholder.
-
-## Security Lab (planned)
-
-The eventual GUI will demonstrate valid and tampered signatures, wrong keys,
-AES-GCM authentication failures, untrusted/forged/expired/revoked certificates
-and replayed authenticated requests. Each demonstration will explain the
-attack, control and observed result; none is available today.
+Tests generate temporary keys and files; no real private keys or fixtures are
+tracked. A Linux development Dockerfile supports **headless CLI tests only**.
+`docker build -t securedoc-nepal:dev .` then
+`docker run --rm --network none securedoc-nepal:dev python -m pytest -v`
+runs those tests; the default container command prints CLI help, not a GUI.
+GitHub CI defines a native OS/Python matrix. Native packaging is defined in
+`.github/workflows/native-build.yml` (Python 3.13), using `scripts/build.py`;
+it builds a GUI and a separate console CLI. Tag builds create **unpublished
+draft prereleases**, never an automatic public release. See
+[docs/CI.md](docs/CI.md) for evidence requirements and platform limitations.
+Do not claim Windows/macOS execution merely because workflows exist.
 
 ## Project structure
 
-```text
-app.py                 # Honest, runnable foundation placeholder
-Dockerfile             # Optional non-root CLI development/test image
-.dockerignore          # Excludes local environments and secrets from build context
-securedoc/             # key_manager.py and future crypto/security/services modules
-tests/                 # Foundation, key-management and X.509 tests
-docs/                  # PKI notes and CI/release boundaries
-examples/              # In-memory PKI demonstration
-screenshots/           # Future real GUI screenshots
-.github/workflows/     # Cross-platform test-only CI (no release workflow)
-```
+`securedoc/crypto/` implements certificates and package cryptography;
+`security/` validates an explicitly pinned direct-issuer chain; `services/`
+owns file workflows, shared by `cli.py` and `gui/desktop.py`. `tests/` contains
+positive and adversarial tests. `app.py` starts the GUI or CLI, `cli_entry.py`
+is the native console bundle entry point, and `scripts/build.py` prepares
+isolated native archives. No mutable data is saved next to an executable.
 
-## Threat model summary
+## Contributing and license
 
-An attacker may obtain or alter document packages, replace documents, replay
-captured authenticated operations, generate keys and present self-signed or
-untrusted certificates. The future implementation must check trust independently
-of signature validity. It cannot protect an already compromised endpoint, a
-stolen unlocked key, a compromised trusted CA or weak private-key passwords.
-Local revocation will depend on the availability and integrity of the local
-revocation store; it is not an Internet-wide revocation service.
-
-## Intended real-world use cases (not yet supported)
-
-1. **Nepalese university verification** — Problem: verifying transcripts,
-   recommendations and certificates. Threat: document substitution or false
-   authorship. Control: CA-validated RSA-PSS signature. Result: detect changes
-   and link a signature to a certified key. Limitation: the CA's identity checks
-   and the university's issuance process are outside cryptographic proof.
-2. **Business contract exchange** — Problem: sending a confidential contract to
-   a partner. Threat: interception and alteration. Control: recipient-bound
-   hybrid encryption and separate signer verification. Result: only the holder
-   of the intended private key can decrypt, assuming uncompromised keys;
-   unauthorized changes fail authentication. Limitation: recipient compromise,
-   metadata exposure and legal enforceability are not solved by encryption.
-3. **Organizational documents** — Problem: exchanging financial, legal and
-   internal reports. Threat: an outsider forges a sender certificate or replays
-   a request. Control: trusted-root validation, revocation and request replay
-   tracking. Result: reject untrusted identities and already-seen authenticated
-   requests. Limitation: offline copies and compromised trusted devices remain
-   outside these controls.
-
-## Known limitations
-
-- Only key generation, PEM key storage and X.509 certificate issuance work;
-  no document security workflow exists yet. This is not production-ready.
-- Certificate verification, revocation, replay tracking and forward secrecy are
-  design goals, not implemented guarantees.
-- No GUI or installer; Python 3.14/CustomTkinter and cross-platform behavior
-  have not been confirmed outside the tested Docker key-management workflow.
-- File names, sizes and interaction metadata may still be observable in a
-  future design unless specifically protected.
-
-## Roadmap
-
-1. Key storage and X.509 issuance (implemented); trust validation (planned).
-2. Signatures, AES-GCM, hybrid encryption and validated `.sdoc` packages.
-3. Revocation, replay protection and optional X25519 exchange.
-4. Service layer, GUI and Security Lab; audit logs.
-5. Cross-platform test CI (configured); diagrams, real screenshots, native
-   packaging and releases only after the application is implemented and tested.
-
-## Screenshots
-
-Not available: no GUI has been implemented. Real screenshots will be added
-after the interface is built and tested.
-
-## Contributing, security and license
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and
-[SECURITY.md](SECURITY.md) for private security reporting and limitations.
-Licensed under the [MIT License](LICENSE). Do not commit keys, credentials,
-private documents or real certificate authority material.
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). This
+project uses the [MIT License](LICENSE). Do not upload keys or documents to
+issues, CI artifacts or releases.

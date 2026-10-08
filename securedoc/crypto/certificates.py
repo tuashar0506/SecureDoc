@@ -102,6 +102,15 @@ def load_certificate(pem: bytes) -> x509.Certificate:
     """Parse a bounded public PEM; parsing does not establish trust."""
     if not isinstance(pem, bytes) or not 0 < len(pem) <= MAX_CERTIFICATE_BYTES:
         raise CertificateError("Certificate PEM is empty or too large.")
+    pem = pem.replace(b"\r\n", b"\n")
+    if (
+        b"\r" in pem
+        or not pem.startswith(b"-----BEGIN CERTIFICATE-----\n")
+        or not pem.rstrip(b"\n").endswith(b"-----END CERTIFICATE-----")
+        or pem.count(b"-----BEGIN CERTIFICATE-----") != 1
+        or pem.count(b"-----END CERTIFICATE-----") != 1
+    ):
+        raise CertificateError("Expected exactly one X.509 certificate PEM.")
     try:
         return x509.load_pem_x509_certificate(pem)
     except (ValueError, UnsupportedAlgorithm) as exc:

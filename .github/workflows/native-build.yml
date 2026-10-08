@@ -1,0 +1,77 @@
+name: Native builds and draft prerelease
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    env:
+      RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install Linux Tk libraries
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y tk8.6 libtk8.6 python3-tk xvfb xauth
+      - name: Install project, test and packaging tools
+        run: python -m pip install -e ".[dev,build]"
+      - name: Check native Tk availability
+        run: python -c "import tkinter; print('Tk', tkinter.TkVersion)"
+      - name: Run security and workflow tests
+        run: python -m pytest -v
+      - name: Check code quality
+        run: python -m ruff check .
+      - name: Check formatting
+        run: python -m black --check .
+      - name: Package native CLI and GUI
+        run: python scripts/build.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.os }}
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  draft-prerelease:
+    name: Create draft prerelease for reviewed tag
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          merge-multiple: true
+          path: release-assets
+      - name: Create unpublished draft (requires human review to publish)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" release-assets/*.zip \
+            --repo "$GITHUB_REPOSITORY" --verify-tag --draft --prerelease \
+            --title "SecureDoc Nepal $TAG (educational prerelease)" \
+            --notes "Educational software, NOT audited. Confirm platform builds, GUI and security limitations before publishing. No code signing or notarization is provided."

@@ -1,13 +1,8 @@
-"""Status entry point until complete document workflows and the GUI exist."""
+"""Run the native GUI by default; pass a subcommand for headless CLI use."""
 
+import sys
 
-def main() -> None:
-    """Report the actual state instead of presenting an insecure mock GUI."""
-    print(
-        "SecureDoc Nepal: key management ready; "
-        "document workflows are not implemented yet."
-    )
-
+from securedoc.cli import main
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main(sys.argv[1:] or ["gui"]))

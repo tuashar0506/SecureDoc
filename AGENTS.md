@@ -27,8 +27,9 @@ exists. Check executable code and meaningful tests first.
 ## Structure and development workflow
 
 - `securedoc/crypto/`: focused cryptographic operations; `security/`:
-  trust/revocation/replay controls (not yet implemented); `services/`: future
-  application workflows; `gui/`: future UI, only after the core is tested.
+  pinned-root validation (revocation/replay remain unimplemented); `services/`:
+  CLI/GUI shared workflows; `gui/`: desktop Tk interface, native display
+  behavior not verified until a real native runner launches it.
 - Add tests for successful use *and* wrong password, tampering, forged input,
   wrong identity, and malformed data where relevant.
 - Use `pathlib` and, when user data storage is implemented, `platformdirs`.
@@ -42,16 +43,15 @@ exists. Check executable code and meaningful tests first.
   `git diff`, and `git diff --staged`. Inspect the staged list for secrets.
 - Do not push, tag, or publish a release unless explicitly authorized. GitHub
   workflow configuration is not evidence of a successful GitHub Actions run.
-- Keep CI test-only until a working application exists. Never publish the
-  status-only `app.py` as a desktop security product or upload runtime secrets
-  as artifacts. See `docs/CI.md` for release prerequisites.
+- Native builds are experimental until successfully built and GUI-launched on
+  every target OS. Release workflow may prepare unpublished drafts only; do
+  not publish as a finished security product or upload runtime secrets.
 
 ## Phase boundaries
 
-Current core work builds on password-encrypted RSA key storage and X.509
-issuance. Next steps are certificate trust/expiry, RSA-PSS document signatures,
-AES-GCM, hybrid document encryption, validated `.sdoc` packages,
-revocation/replay, and optional X25519.
-Only then should services, GUI, Security Lab, native packaging, and releases
-claim to provide those workflows. Never ship a status-only CLI as a finished
-desktop security application.
+Implemented core: RSA key storage, X.509 issuance, pinned-root direct-chain
+and expiry validation, signed and encrypted single-recipient `.sdoc` files,
+CLI and native Tk GUI. Pending: local revocation enforcement, GUI/native build
+verification on all platforms, optional X25519, Security Lab and any claims
+of production security. No authenticated network request workflow exists, so
+request replay protection is not applicable to the present offline file tool.

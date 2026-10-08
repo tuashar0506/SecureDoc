@@ -100,6 +100,19 @@ def test_certificate_pem_round_trip_and_fingerprint(root: x509.Certificate) -> N
     assert fingerprint != certificate_fingerprint(different_root)
 
 
+def test_concatenated_certificate_and_trailing_data_rejected(
+    root: x509.Certificate,
+) -> None:
+    pem = serialize_certificate(root)
+    for malformed in (pem + pem, pem + b"extra data", b"leading data" + pem):
+        with pytest.raises(CertificateError):
+            load_certificate(malformed)
+
+
+def test_certificate_pem_with_windows_line_endings(root: x509.Certificate) -> None:
+    assert load_certificate(serialize_certificate(root).replace(b"\n", b"\r\n")) == root
+
+
 @pytest.mark.parametrize(
     "bad_pem",
     [

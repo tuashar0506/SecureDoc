@@ -1,40 +1,54 @@
-# Continuous integration and release boundaries
+# CI, native packaging, and draft releases
 
-The repository configures a **test-only** GitHub Actions workflow at
-`.github/workflows/ci.yml`. It runs on pushes to `main`, pull requests and
-manual dispatch. Its test matrix installs `requirements.txt` and runs the
-pytest suite on native Ubuntu, Windows and macOS runners with Python 3.11,
-3.13 and 3.14. A separate Ubuntu/Python 3.13 job runs Ruff and Black. Jobs have
-read-only repository permissions, do not retain checkout credentials, and
-upload no artifacts or test-generated private keys. Pull requests do not need
-repository secrets.
+`.github/workflows/ci.yml` tests the shared CLI/crypto core on Ubuntu,
+Windows and macOS with Python 3.11, 3.13 and 3.14. It also checks Ruff and
+Black. The tests generate random temporary identities; no runtime documents,
+passwords, keys or certificates are uploaded.
 
-**A workflow file is not evidence of a successful run.** After pushing, check
-the repository's Actions tab and inspect all matrix jobs and their logs. A
-green Linux test does not imply that Windows or macOS passed. To reproduce
-locally with the active project virtual environment:
+`.github/workflows/native-build.yml` runs on pushes to `main`, pull requests,
+manual dispatch and `v*` tags.
+It installs Python 3.13, verifies Tk can be imported, runs the full test suite
+and checks style on **each** native runner. `scripts/build.py` runs PyInstaller
+locally on each runner: a GUI bundle plus a separate console CLI bundle; it
+smoke-tests the **bundled CLI** using `--help` and briefly launches the **bundled
+GUI** (`gui --smoke`; under Xvfb on headless Linux). The archives contain the bundles
+and public project documentation, not runtime user data or test files.
+Artifact names include package version, runner OS and detected CPU
+architecture. Build artifacts expire after 7 days.
+
+Only a `v*` tag exactly matching `pyproject.toml` can create an **unpublished
+draft prerelease**, after all three builds and tests pass. Publication requires
+a human to inspect the artifacts and publish the draft. Workflow dispatch
+and branch/PR runs build artifacts but do not create a release. These packages are **not**
+signed or notarized. The repository does not claim a build has passed until its
+GitHub Actions logs and artifacts have actually been inspected.
+
+## Native verification still required
+
+Launching the GUI briefly does **not** prove that dialogs work, or that the
+cryptographic workflow operates inside a frozen GUI. Before publishing, unpack
+each archive on the intended native OS,
+run the GUI and console app, check certificate issuance and a test-only
+protect/open round trip, verify no runtime key/certificate/plaintext exists in
+the archive, and inspect OS-specific permissions and antivirus/quarantine
+behavior. On macOS, quarantine and unsigned-app warnings are expected until
+codesigning and notarization are arranged. On Linux, ensure the target system
+has the required Tk/display libraries. No installer, application icon, or
+automatic updater is included. Do not publish as a finished security product;
+the offline tool has no revocation enforcement or real-world identity vetting.
+
+Local checks inside the project environment:
 
 ```sh
-python -m pip install -r requirements.txt
 python -m pytest -v
 python -m ruff check .
 python -m black --check .
+python -m pip install -e '.[dev,build]'
+python scripts/build.py
 ```
 
-## What is intentionally not automated yet
-
-There is no desktop GUI, validated document workflow, PyInstaller spec,
-native package or release workflow. The current `app.py` reports development
-status only. Publishing it as a finished desktop security product, or tagging
-it `v1.0.0`, would misrepresent the code. Do not upload private keys,
-certificates, audit logs or document files as build or test artifacts.
-
-Before adding a release workflow: implement and test the core document
-workflows and GUI, select an application-data directory outside the bundled
-executable, and test a reproducible PyInstaller configuration on each native
-runner. Check each package by launching the actual application and exercising
-non-sensitive workflows. Explicitly exclude runtime data and secrets from
-the build context and archives. Make publishing depend on passing CI and
-verified build jobs; require an explicit reviewed tag/release decision. No
-published platform or security claim should precede evidence from that
-platform and workflow.
+The last two commands require Tkinter support and PyInstaller, neither of
+which is present in this checkout's current Linux environment. Install project
+Python dependencies only in `.venv`; the native Tk library may require a
+system package matching the Python interpreter. Do not assume success on a
+platform that was not run.

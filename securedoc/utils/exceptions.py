@@ -15,3 +15,7 @@ class IncorrectPasswordError(KeyManagementError):
 
 class CertificateError(SecureDocError):
     """Certificate creation, parsing, or issuance was rejected."""
+
+
+class DocumentError(SecureDocError):
+    """A document or package failed validation or authentication."""
