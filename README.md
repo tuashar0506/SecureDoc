@@ -11,14 +11,14 @@ design, **not completed functionality**.
 
 | Status | Capability |
 | --- | --- |
-Implemented | Python package skeleton, project guidance, ignore rules, a runnable status placeholder, and a Docker development/test image |
-In progress | Automated quality checks and cryptographic core |
-Planned | RSA-3072 identities with password-encrypted private keys, local X.509 CA and certificate validation |
-Planned | RSA-PSS/SHA-256 signing, AES-256-GCM and RSA-OAEP hybrid encryption |
-Planned | Safe `.sdoc` packages, revocation checks, authenticated-request replay protection |
-Planned | Optional X25519/HKDF exchange, service layer, GUI, Security Lab and audit logging |
+| Implemented | Foundation, Docker development/test image, RSA-3072 key generation and password-encrypted private-key PEM storage |
+| In progress | Cryptographic core and automated security tests |
+| Planned | Multiple-identity management, local X.509 CA and certificate validation |
+| Planned | RSA-PSS/SHA-256 signing, AES-256-GCM and RSA-OAEP hybrid encryption |
+| Planned | Safe `.sdoc` packages, revocation checks, authenticated-request replay protection |
+| Planned | Optional X25519/HKDF exchange, service layer, GUI, Security Lab and audit logging |
 
-There is **no** document encryption, signing, CA, or GUI in this phase.
+There is **no** document encryption, signing, CA, identity manager, or GUI yet.
 
 ## Security goals and design (planned)
 
@@ -42,7 +42,7 @@ There is **no** document encryption, signing, CA, or GUI in this phase.
 
 Cryptography will use the established Python `cryptography` library rather than
 home-grown primitives. Private keys must be encrypted at rest with a password;
-the exact protection format and password policy will be documented when built.
+the implemented PEM format and password rules are documented below.
 
 ## Architecture
 
@@ -52,12 +52,32 @@ the exact protection format and password policy will be documented when built.
 coordinate workflows; `securedoc/gui/` will contain the future interface;
 `securedoc/utils/` will contain safe, shared helpers. Tests live in `tests/`.
 The entry point `app.py` currently prints a development status message only.
+`securedoc/crypto/key_manager.py` implements RSA-3072 key generation and
+encrypted key storage, independently of a GUI or identity database.
+
+## Key management (implemented library API)
+
+`generate_rsa_private_key()` generates an RSA-3072 private key; its public
+counterpart is obtained using `.public_key()`. `save_private_key()` writes an
+encrypted PKCS#8 PEM using `cryptography`'s `BestAvailableEncryption`. The
+password must contain at least 12 characters; length alone does not guarantee
+a strong password. Only you can supply that password; it is never saved.
+`load_private_key()` unlocks the PEM. `save_public_key()` and
+`load_public_key()` work with a public PEM, which contains no private material.
+New files are created without overwriting existing files; on POSIX systems,
+private-key files are created with owner-only permissions (`0600`). Windows
+file ACLs depend on the user's operating-system account and must be checked
+before using real keys. Avoid putting real private keys in this coursework
+repository, even in ignored directories. Key generation and saving are not
+connected to `app.py` yet; run `python -m pytest tests/test_keys.py -v` to
+exercise both successful and failure cases.
 
 ## Install and run (foundation)
 
 Use an isolated environment; do not install project dependencies globally.
-Python 3.11+ is configured; Python 3.14 and GUI compatibility still need
-validation. Commands below start in the project directory.
+Python 3.11+ is configured. Key-management tests passed in a Linux Docker
+image with Python 3.14.8; Python 3.14.7 on CachyOS and GUI compatibility
+still need validation. Commands below start in the project directory.
 
 ### Linux (Fish shell)
 
@@ -79,18 +99,19 @@ use `source .venv/bin/activate` instead. Check `which python` points into `.venv
 Docker is optional. It provides a repeatable **CLI test environment**, not a
 working security product or a GUI. Run from the repository root with a trusted
 Docker daemon; image builds download Python packages from package repositories.
-The default image uses Python 3.13, which has been checked locally; Python
-3.14 must be tested separately before claiming support.
+The default image uses Python 3.13. Key-management tests have also passed in
+a Python 3.14.8 Linux Docker image; this does not prove GUI or native Windows
+and macOS compatibility.
 
 ```sh
-docker build -t securedoc-nepal:foundation .
-docker run --rm --network none --read-only --tmpfs /tmp:rw,nosuid,nodev,size=64m --cap-drop ALL --security-opt no-new-privileges securedoc-nepal:foundation
-docker run --rm --network none --read-only --tmpfs /tmp:rw,nosuid,nodev,size=64m --cap-drop ALL --security-opt no-new-privileges securedoc-nepal:foundation python -m pytest -p no:cacheprovider -v
+docker build -t securedoc-nepal:dev .
+docker run --rm --network none --read-only --tmpfs /tmp:rw,nosuid,nodev,size=64m --cap-drop ALL --security-opt no-new-privileges securedoc-nepal:dev
+docker run --rm --network none --read-only --tmpfs /tmp:rw,nosuid,nodev,size=64m --cap-drop ALL --security-opt no-new-privileges securedoc-nepal:dev python -m pytest -p no:cacheprovider -v
 ```
 
-The first `docker run` prints the same foundation status as `python app.py`;
-the second should pass both foundation tests. The image runs as a non-root
-user; project dependencies live inside the image's `/opt/venv`. `.dockerignore`
+The first `docker run` prints the same status as `python app.py`;
+the second should pass the foundation and key-management tests. The image
+runs as a non-root user; project dependencies live inside its `/opt/venv`. `.dockerignore`
 excludes local keys, documents, `.venv` and Git history from the build context.
 Do not mount host keys, private documents or the Docker socket into the image.
 Docker isolation is not a replacement for cryptographic security, and access
@@ -117,8 +138,8 @@ python -m pip install -r requirements.txt
 python app.py
 ```
 
-The expected current output is `SecureDoc Nepal: foundation ready; security
-features are not implemented yet.` This is **not** an encryption test.
+The expected current output is `SecureDoc Nepal: key management ready; document
+workflows are not implemented yet.` This is **not** an encryption test.
 
 ## Tests and development checks
 
@@ -132,8 +153,8 @@ python -m ruff check .
 python -m black --check .
 ```
 
-At this stage, only a foundation smoke test exists. Coverage of the empty
-package does **not** indicate cryptographic security. CI across Ubuntu,
+At this stage, foundation and key-management tests exist; coverage does
+**not** establish cryptographic security. CI across Ubuntu,
 Windows and macOS is planned; no CI result is claimed yet.
 
 ## Security Lab (planned)
@@ -149,8 +170,8 @@ attack, control and observed result; none is available today.
 app.py                 # Honest, runnable foundation placeholder
 Dockerfile             # Optional non-root CLI development/test image
 .dockerignore          # Excludes local environments and secrets from build context
-securedoc/             # crypto/, security/, models/, services/, gui/, utils/
-tests/                 # Foundation smoke test; cryptographic tests to follow
+securedoc/             # key_manager.py and future crypto/security/services modules
+tests/                 # Foundation and key-management tests; more to follow
 docs/                  # Future architecture and threat-model details
 examples/              # Future non-sensitive examples
 screenshots/           # Future real GUI screenshots
@@ -189,17 +210,18 @@ revocation store; it is not an Internet-wide revocation service.
 
 ## Known limitations
 
-- Foundation only: **no security operations exist yet**.
+- Only key generation and PEM key storage work; no document security workflow
+  exists yet. This software is not audited or production-ready.
 - Certificate verification, revocation, replay tracking and forward secrecy are
   design goals, not implemented guarantees.
 - No GUI or installer; Python 3.14/CustomTkinter and cross-platform behavior
-  have not been confirmed in this repository.
+  have not been confirmed outside the tested Docker key-management workflow.
 - File names, sizes and interaction metadata may still be observable in a
   future design unless specifically protected.
 
 ## Roadmap
 
-1. Key storage and tests; X.509 CA and certificate validation.
+1. Key storage and tests (implemented); X.509 CA and certificate validation (planned).
 2. Signatures, AES-GCM, hybrid encryption and validated `.sdoc` packages.
 3. Revocation, replay protection and optional X25519 exchange.
 4. Service layer, GUI and Security Lab; audit logs.

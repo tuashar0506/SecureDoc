@@ -12,7 +12,7 @@ def test_placeholder_reports_unimplemented_security(
     """Users must not mistake the placeholder for an operational security tool."""
     main()
     output = capsys.readouterr().out
-    assert "security features are not implemented yet" in output
+    assert "document workflows are not implemented yet" in output
 
 
 def test_package_import_exposes_foundation_version() -> None:

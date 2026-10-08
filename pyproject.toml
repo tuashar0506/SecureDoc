@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = {file = "LICENSE"}
 authors = [{name = "SecureDoc Nepal contributors"}]
-dependencies = []
+dependencies = ["cryptography>=46"]
 
 [project.optional-dependencies]
 dev = [

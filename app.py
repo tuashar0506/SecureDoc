@@ -1,11 +1,11 @@
-"""Entry point until the tested cryptographic core and GUI exist."""
+"""Status entry point until complete document workflows and the GUI exist."""
 
 
 def main() -> None:
     """Report the actual state instead of presenting an insecure mock GUI."""
     print(
-        "SecureDoc Nepal: foundation ready; "
-        "security features are not implemented yet."
+        "SecureDoc Nepal: key management ready; "
+        "document workflows are not implemented yet."
     )
 
 
