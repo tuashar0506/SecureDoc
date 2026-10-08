@@ -42,6 +42,9 @@ exists. Check executable code and meaningful tests first.
   `git diff`, and `git diff --staged`. Inspect the staged list for secrets.
 - Do not push, tag, or publish a release unless explicitly authorized. GitHub
   workflow configuration is not evidence of a successful GitHub Actions run.
+- Keep CI test-only until a working application exists. Never publish the
+  status-only `app.py` as a desktop security product or upload runtime secrets
+  as artifacts. See `docs/CI.md` for release prerequisites.
 
 ## Phase boundaries
 

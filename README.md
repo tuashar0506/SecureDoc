@@ -13,6 +13,7 @@ design, **not completed functionality**.
 | --- | --- |
 | Implemented | Foundation, Docker development/test image, encrypted RSA-3072 keys, local X.509 root and user-certificate issuance |
 | In progress | Cryptographic core and automated security tests |
+| Configured, not yet verified on GitHub | Cross-platform test/lint CI workflow; no packages or releases |
 | Planned | Multiple-identity management and certificate trust, expiry and revocation validation |
 | Planned | RSA-PSS/SHA-256 signing, AES-256-GCM and RSA-OAEP hybrid encryption |
 | Planned | Safe `.sdoc` packages, revocation checks, authenticated-request replay protection |
@@ -158,8 +159,12 @@ python -m black --check .
 ```
 
 At this stage, foundation, key-management and X.509 issuance tests exist;
-coverage does **not** establish cryptographic security. CI across Ubuntu,
-Windows and macOS is planned; no CI result is claimed yet.
+coverage does **not** establish cryptographic security. A
+[test-only CI workflow](docs/CI.md) is configured for native Ubuntu, Windows
+and macOS runners on Python 3.11, 3.13 and 3.14, with Ruff and Black on Ubuntu.
+No GitHub Actions run or cross-platform result is claimed until the workflow
+actually runs and its jobs are inspected. No desktop packaging or automated
+release is configured while the application remains a status placeholder.
 
 ## Security Lab (planned)
 
@@ -175,11 +180,11 @@ app.py                 # Honest, runnable foundation placeholder
 Dockerfile             # Optional non-root CLI development/test image
 .dockerignore          # Excludes local environments and secrets from build context
 securedoc/             # key_manager.py and future crypto/security/services modules
-tests/                 # Foundation and key-management tests; more to follow
-docs/                  # Future architecture and threat-model details
-examples/              # Future non-sensitive examples
+tests/                 # Foundation, key-management and X.509 tests
+docs/                  # PKI notes and CI/release boundaries
+examples/              # In-memory PKI demonstration
 screenshots/           # Future real GUI screenshots
-.github/workflows/     # Future cross-platform CI
+.github/workflows/     # Cross-platform test-only CI (no release workflow)
 ```
 
 ## Threat model summary
@@ -229,7 +234,8 @@ revocation store; it is not an Internet-wide revocation service.
 2. Signatures, AES-GCM, hybrid encryption and validated `.sdoc` packages.
 3. Revocation, replay protection and optional X25519 exchange.
 4. Service layer, GUI and Security Lab; audit logs.
-5. Cross-platform CI, documentation, diagrams, real screenshots and packaging.
+5. Cross-platform test CI (configured); diagrams, real screenshots, native
+   packaging and releases only after the application is implemented and tested.
 
 ## Screenshots
 
