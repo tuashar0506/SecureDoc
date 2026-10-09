@@ -75,9 +75,12 @@ def main() -> None:
             / "SecureDoc-Nepal"
         )
     command = [str(gui), "gui", "--smoke"]
+    gui_env = os.environ.copy()
     if sys.platform == "linux" and not os.environ.get("DISPLAY"):
         command = ["xvfb-run", "-a", *command]
-    subprocess.run(command, cwd=ROOT, check=True, timeout=45)
+        # Smoke-test the real XCB plugin, never a caller's offscreen override.
+        gui_env["QT_QPA_PLATFORM"] = "xcb"
+    subprocess.run(command, cwd=ROOT, env=gui_env, check=True, timeout=45)
     for document in ("README.md", "SECURITY.md", "LICENSE"):
         shutil.copy2(ROOT / document, DIST / "bundle" / document)
     forbidden = {".env", "audit_logs", "private_keys", "revocation", "data"}

@@ -32,11 +32,32 @@ jobs:
           cache-dependency-path: pyproject.toml
       - name: Install Linux Qt display support
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y xvfb xauth libgl1 libegl1 libxkbcommon-x11-0 libxcb-cursor0
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            xvfb xauth libgl1 libegl1 libfontconfig1 libxkbcommon-x11-0 \
+            libx11-xcb1 libxcb-cursor0 libxcb-glx0 libxcb-icccm4 \
+            libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
+            libxcb-render0 libxcb-shape0 libxcb-shm0 libxcb-sync1 \
+            libxcb-xfixes0 libxcb-xkb1
       - name: Install project, test and packaging tools
         run: python -m pip install -e ".[dev,build]"
       - name: Check Qt availability
         run: python -c "from PySide6.QtWidgets import QApplication; from PySide6.QtSvg import QSvgRenderer; print('Qt bindings available')"
+      - name: Check Linux XCB plugin dependencies
+        if: runner.os == 'Linux'
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+          import PySide6
+
+          plugin = Path(PySide6.__file__).parent / 'Qt/plugins/platforms/libqxcb.so'
+          result = subprocess.run(['ldd', str(plugin)], capture_output=True, text=True, check=True)
+          print(result.stdout)
+          if 'not found' in result.stdout:
+              raise SystemExit('Qt XCB dependencies are missing on the Linux runner.')
+          PY
       - name: Run security and workflow tests
         run: python -m pytest -v
       - name: Check code quality

@@ -15,6 +15,10 @@ GUI** (`gui --smoke`; under Xvfb on headless Linux). The archives contain the bu
 and public project documentation, not runtime user data or test files.
 Artifact names include package version, runner OS and detected CPU
 architecture. Build artifacts expire after 7 days.
+The Linux runner installs Qt XCB dependencies and checks `libqxcb.so` with
+`ldd` before packaging. A previous Xvfb smoke launch aborted because XCB
+libraries were missing; this dependency fix still needs a successful Actions
+rerun before the Linux CI build can be claimed as passed.
 
 Only a `v*` tag exactly matching `pyproject.toml` can create an **unpublished
 draft prerelease**, after all three builds and tests pass. Publication requires
