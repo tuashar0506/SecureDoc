@@ -21,10 +21,12 @@ def app():
 
 
 def test_pages_theme_and_trust_are_explicit(app) -> None:
+    from PySide6.QtGui import QPalette
     from PySide6.QtWidgets import QLineEdit
 
-    from securedoc.gui.desktop import COLORS, Desktop
+    from securedoc.gui.desktop import COLORS, Desktop, icon
 
+    original = QPalette(app.palette())
     window = Desktop()
     assert len(window.nav) == 4
     assert len(window.actions) == 4
@@ -38,11 +40,64 @@ def test_pages_theme_and_trust_are_explicit(app) -> None:
     )
     assert window.root_pin.text() == ""
     assert window.inputs["seal_password"].echoMode() == QLineEdit.EchoMode.Password
+    app.processEvents()
+    assert window.stack.height() == window.stack.currentWidget().sizeHint().height()
+    assert window.theme.currentText() == "System"
+    assert app.palette() == original
+    assert "QWidget {" not in window.styleSheet()
+    assert not icon("tabler-folder-open", "#000000").isNull()
+    assert not icon("heroicons-shield-check", "#000000").isNull()
+    assert all(not button.icon().isNull() for button in window.browse)
     window.theme.setCurrentText("Dark")
     assert COLORS["Dark"]["accent"] in window.styleSheet()
+    assert (
+        app.palette().color(QPalette.ColorRole.Base).name()
+        == COLORS["Dark"]["surface"].lower()
+    )
     window.theme.setCurrentText("Light")
     assert COLORS["Light"]["accent"] in window.styleSheet()
+    window.theme.setCurrentText("System")
+    assert app.palette() == original
+    window.select_page(1)
+    app.processEvents()
+    assert window.stack.sizeHint().height() > window.stack.widget(0).sizeHint().height()
     window.close()
+
+
+def test_system_palette_updates_custom_chrome(app) -> None:
+    from PySide6.QtGui import QColor, QPalette
+
+    from securedoc.gui.desktop import Desktop
+
+    original = QPalette(app.palette())
+    window = Desktop()
+    try:
+        new = QPalette(original)
+        new.setColor(QPalette.ColorRole.Highlight, QColor("#784599"))
+        app.setPalette(new)
+        assert "#784599" in window.styleSheet()
+        assert app.palette().color(QPalette.ColorRole.Highlight) == QColor("#784599")
+    finally:
+        window.close()
+        app.setPalette(original)
+
+
+def test_wayland_preference_respects_user_platform(monkeypatch) -> None:
+    from securedoc.gui import desktop
+
+    monkeypatch.setattr(desktop.sys, "platform", "linux")
+    monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
+    monkeypatch.setenv("WAYLAND_DISPLAY", "wayland-0")
+    monkeypatch.delenv("QT_QPA_PLATFORM", raising=False)
+    desktop.prefer_wayland()
+    assert os.environ["QT_QPA_PLATFORM"] == "wayland;xcb"
+    monkeypatch.setenv("QT_QPA_PLATFORM", "offscreen")
+    desktop.prefer_wayland()
+    assert os.environ["QT_QPA_PLATFORM"] == "offscreen"
+    monkeypatch.delenv("QT_QPA_PLATFORM")
+    monkeypatch.setenv("XDG_SESSION_TYPE", "x11")
+    desktop.prefer_wayland()
+    assert "QT_QPA_PLATFORM" not in os.environ
 
 
 def test_missing_trust_or_fields_never_start_worker(app) -> None:

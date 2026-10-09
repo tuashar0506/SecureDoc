@@ -31,7 +31,7 @@ securedoc-gui = "securedoc.gui.desktop:launch"
 include = ["securedoc*"]
 
 [tool.setuptools.package-data]
-"securedoc.gui" = ["icons/*.svg", "icons/LICENSE", "theme.qss"]
+"securedoc.gui" = ["icons/*.svg", "icons/LICENSE*", "theme.qss"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

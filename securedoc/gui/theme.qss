@@ -1,23 +1,37 @@
-QWidget { background: $bg; color: $text; font-size: 13px; }
-QLabel { background: transparent; }
+/* Only the workspace chrome is custom in System mode. Let Qt paint controls. */
 QFrame#side { background: $sidebar; border-right: 1px solid $border; }
-QLabel#brand { font-size: 15px; font-weight: 800; letter-spacing: 1px; }
-QLabel#eyebrow { color: $accent; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+QLabel#brand { font-size: 16pt; font-weight: 700; }
+QLabel#eyebrow { color: $muted; font-size: 10pt; font-weight: 600; }
 QLabel#sidebarNote, QLabel#hint, QLabel#subtitle { color: $muted; }
 QLabel#topTitle { font-weight: 600; }
-QLabel#heading { font-size: 29px; font-weight: 700; }
-QLabel#cardTitle { font-size: 16px; font-weight: 700; }
-QFrame#card { background: $surface; border: 1px solid $border; border-radius: 12px; }
-QFrame#card QLabel { background: transparent; }
-QLineEdit, QComboBox { background: $surface; border: 1px solid $border; border-radius: 7px; padding: 8px 10px; selection-background-color: $accent; }
-QLineEdit:focus, QComboBox:focus, QPushButton:focus { border: 2px solid $accent; }
-QLineEdit::placeholder { color: $muted; }
-QPushButton { border-radius: 7px; padding: 8px 14px; font-weight: 600; }
-QPushButton#secondary { background: $soft; color: $text; border: 1px solid $border; }
-QPushButton#secondary:hover, QPushButton#nav:hover { background: $soft; }
-QPushButton#primary { background: $accent; color: $primary_text; }
-QPushButton#primary:disabled { background: $muted; }
-QPushButton#nav { text-align: left; color: $muted; border: 1px solid transparent; }
-QPushButton#nav[selected="true"] { background: $soft; color: $accent; border-left: 3px solid $accent; }
-QLabel#status { background: $soft; color: $text; border-radius: 7px; padding: 10px; }
-QScrollArea { border: none; }
+QLabel#heading { font-size: 23pt; font-weight: 700; }
+QLabel#cardTitle { font-size: 13pt; font-weight: 600; }
+QFrame#card { background: $surface; border: 1px solid $border; border-radius: 10px; }
+QFrame#card QLabel { border: none; background: transparent; }
+QPushButton#nav { text-align: left; padding: 8px 12px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: $text; }
+QPushButton#nav:hover { background: $soft; }
+QPushButton#nav[selected="true"] { background: $accent; color: $on_accent; font-weight: 600; }
+QPushButton#nav:focus { border: 2px solid $accent; }
+QLabel#status { background: $soft; color: $text; border: 1px solid $border; border-radius: 7px; padding: 10px; }
+QScrollArea { border: none; background: transparent; }
+/* Explicit themes skin controls too; System retains the desktop's native style. */
+QWidget[appearance="light"] QLineEdit, QWidget[appearance="dark"] QLineEdit,
+QWidget[appearance="light"] QComboBox, QWidget[appearance="dark"] QComboBox {
+    background: $surface; color: $text; border: 1px solid $border;
+    border-radius: 7px; padding: 7px 10px; selection-background-color: $accent;
+    selection-color: $on_accent;
+}
+QWidget[appearance="light"] QLineEdit:focus, QWidget[appearance="dark"] QLineEdit:focus,
+QWidget[appearance="light"] QComboBox:focus, QWidget[appearance="dark"] QComboBox:focus { border: 2px solid $accent; }
+QWidget[appearance="light"] QPushButton#secondary, QWidget[appearance="dark"] QPushButton#secondary {
+    background: $surface; color: $text; border: 1px solid $border;
+    border-radius: 7px; padding: 7px 12px;
+}
+QWidget[appearance="light"] QPushButton#primary, QWidget[appearance="dark"] QPushButton#primary {
+    background: $accent; color: $on_accent; border: 1px solid $accent;
+    border-radius: 7px; padding: 8px 16px; font-weight: 600;
+}
+QWidget[appearance="light"] QPushButton#secondary:hover, QWidget[appearance="dark"] QPushButton#secondary:hover { background: $soft; }
+QWidget[appearance="light"] QPushButton#primary:disabled, QWidget[appearance="dark"] QPushButton#primary:disabled { background: $soft; color: $muted; border-color: $border; }
+QWidget[appearance="light"] QPushButton#primary:focus, QWidget[appearance="dark"] QPushButton#primary:focus,
+QWidget[appearance="light"] QPushButton#secondary:focus, QWidget[appearance="dark"] QPushButton#secondary:focus { border: 2px solid $text; }

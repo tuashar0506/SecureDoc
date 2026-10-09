@@ -11,7 +11,7 @@ on native hardware before relying on them; a workflow file is not a test result.
 | Status | Capability |
 | --- | --- |
 | Implemented and locally tested | Password-encrypted RSA-3072 keys; X.509 local root and user issuance; SHA-256 root fingerprint pinning and direct-issuer/validity/key-usage checks; RSA-PSS/SHA-256 package signatures; fresh AES-256-GCM document encryption and RSA-OAEP/SHA-256 recipient key wrapping; bounded `.sdoc` parser; exclusive file writes; shared CLI/file workflows |
-| Implemented, native display unverified on this host | PySide6/Qt Widgets desktop interface with light, dark and system themes, bundled icons, and the same shared workflows |
+| Implemented, native display unverified on this host | PySide6/Qt Widgets desktop interface with native System mode, explicit light/dark modes, bundled Lucide/Tabler/Heroicons SVGs, and the same shared workflows; Wayland is preferred in detected Wayland sessions |
 | Locally checked offscreen, native display unverified | Linux PyInstaller GUI and CLI bundles built and smoke-tested with temporary host libraries outside the repository; Windows/macOS builds and full native GUI workflows still need verification; tag-triggered **draft prereleases only** |
 | Not implemented | Online identity verification, persistent revocation/CRL enforcement, authenticated network request replay tracking, X25519 forward secrecy, multi-recipient encryption, native code signing/notarization, Security Lab |
 
@@ -41,8 +41,11 @@ python app.py gui
 If there is no `.venv`, create one with `python3 -m venv .venv` first. For Bash,
 use `source .venv/bin/activate`; for Windows PowerShell, use
 `.\.venv\Scripts\Activate.ps1`. `python app.py` also launches the GUI.
-Qt display/library errors on Linux mean the host needs its native Qt runtime
-libraries and a working display. There is no configured application data
+On Linux Wayland sessions, the GUI prefers Qt's Wayland plugin (with XCB as a
+fallback if the plugin is unavailable). It respects an existing
+`QT_QPA_PLATFORM` setting. `QT_QPA_PLATFORM=xcb python app.py gui` explicitly
+uses XWayland if needed. Qt display/library errors mean the host needs native
+Qt runtime libraries and a working display. There is no configured application data
 directory or auto-saved password: file paths are explicitly chosen by users.
 
 ## CLI quick start
@@ -68,10 +71,12 @@ the same four steps: Create CA → Issue identity → Protect → Open. In the G
 you confirmed independently. All saved outputs refuse to overwrite existing
 files, including decrypted documents. A package is limited to a 16 MiB
 plaintext and a 24 MiB `.sdoc` file; both CLI and GUI use the same bounds.
-The Appearance selector offers system, light and dark themes for the current
-session. File operations run off the UI thread; close waits for an active
-operation to finish. Icons are locally bundled Lucide SVGs (ISC; see
-`securedoc/gui/icons/LICENSE`), never fetched at runtime. PySide6-Essentials
+The Appearance selector defaults to System: Qt keeps the desktop's native
+controls, palette and font while the custom navigation follows its colors.
+Light and Dark override the palette for the current session only. File
+operations run off the UI thread; close waits for an active operation to
+finish. Icons are bundled Lucide (ISC), Tabler and Heroicons (MIT) SVGs (see
+`securedoc/gui/icons/LICENSE*`), never fetched at runtime. PySide6-Essentials
 is LGPLv3-licensed; the project code remains MIT-licensed. The layout follows
 [Qt's accessibility guidance](https://doc.qt.io/qt-6/accessible.html) on
 keyboard navigation, labels, and contrast; native assistive-technology and

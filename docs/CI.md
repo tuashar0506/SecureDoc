@@ -1,5 +1,10 @@
 # CI, native packaging, and draft releases
 
+GitHub's JavaScript-based checkout, Python setup, and artifact actions run on
+Node.js 24 on GitHub-hosted runners (runner 2.327.1+); Node is needed by those
+CI actions, **not** by the SecureDoc Python application. No Node package or
+runtime is required to install or run SecureDoc.
+
 `.github/workflows/ci.yml` tests the shared CLI/crypto core on Ubuntu,
 Windows and macOS with Python 3.11, 3.13 and 3.14. It also checks Ruff and
 Black. The tests generate random temporary identities; no runtime documents,
