@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = {file = "LICENSE"}
 authors = [{name = "SecureDoc Nepal contributors"}]
-dependencies = ["cryptography>=46"]
+dependencies = ["cryptography>=46", "PySide6-Essentials>=6.8,<7"]
 
 [project.optional-dependencies]
 dev = [
@@ -29,6 +29,9 @@ securedoc-gui = "securedoc.gui.desktop:launch"
 
 [tool.setuptools.packages.find]
 include = ["securedoc*"]
+
+[tool.setuptools.package-data]
+"securedoc.gui" = ["icons/*.svg", "icons/LICENSE", "theme.qss"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

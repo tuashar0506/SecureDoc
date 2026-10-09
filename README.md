@@ -1,6 +1,6 @@
 # SecureDoc Nepal
 
-**Educational document signing and encryption with a CLI and native Tk GUI.**
+**Educational document signing and encryption with a CLI and Qt desktop GUI.**
 
 ST6051CEM Practical Cryptography coursework, **not audited or suitable for real
 secrets**. Windows/macOS compatibility and packaged GUI launches must be checked
@@ -11,8 +11,8 @@ on native hardware before relying on them; a workflow file is not a test result.
 | Status | Capability |
 | --- | --- |
 | Implemented and locally tested | Password-encrypted RSA-3072 keys; X.509 local root and user issuance; SHA-256 root fingerprint pinning and direct-issuer/validity/key-usage checks; RSA-PSS/SHA-256 package signatures; fresh AES-256-GCM document encryption and RSA-OAEP/SHA-256 recipient key wrapping; bounded `.sdoc` parser; exclusive file writes; shared CLI/file workflows |
-| Implemented, display unverified on this host | Native Tk/ttk desktop interface using those workflows (this Linux Python has no Tkinter) |
-| Configured, not verified by this change | Native Linux/Windows/macOS tests and PyInstaller builds; tag-triggered **draft prereleases only** |
+| Implemented, native display unverified on this host | PySide6/Qt Widgets desktop interface with light, dark and system themes, bundled icons, and the same shared workflows |
+| Locally checked offscreen, native display unverified | Linux PyInstaller GUI and CLI bundles built and smoke-tested with temporary host libraries outside the repository; Windows/macOS builds and full native GUI workflows still need verification; tag-triggered **draft prereleases only** |
 | Not implemented | Online identity verification, persistent revocation/CRL enforcement, authenticated network request replay tracking, X25519 forward secrecy, multi-recipient encryption, native code signing/notarization, Security Lab |
 
 Certificate issuance, a valid document signature, and a selected root fingerprint
@@ -26,9 +26,9 @@ documents, `.sdoc` files or audit data.
 
 ## Installation
 
-Use Python 3.11+ with native Tkinter support for the GUI. Tkinter is distributed
-with most python.org Windows/macOS installers; some Linux Python builds need a
-matching system Tk installation. The CLI and tests do not need Tkinter. In Fish:
+Use Python 3.11+; `requirements.txt` installs PySide6-Essentials (Qt Widgets)
+for the GUI. Linux needs working Qt display libraries and an X11 or Wayland
+desktop session. The CLI itself does not need a display. In Fish:
 
 ```fish
 cd ~/securedoc-nepal
@@ -40,9 +40,9 @@ python app.py gui
 
 If there is no `.venv`, create one with `python3 -m venv .venv` first. For Bash,
 use `source .venv/bin/activate`; for Windows PowerShell, use
-`.\.venv\Scripts\Activate.ps1`. `python app.py` also launches the GUI. A
-missing Tk error means the **Python installation** needs Tk support; do not
-attempt to install Tkinter from PyPI. There is no configured application data
+`.\.venv\Scripts\Activate.ps1`. `python app.py` also launches the GUI.
+Qt display/library errors on Linux mean the host needs its native Qt runtime
+libraries and a working display. There is no configured application data
 directory or auto-saved password: file paths are explicitly chosen by users.
 
 ## CLI quick start
@@ -68,6 +68,16 @@ the same four steps: Create CA → Issue identity → Protect → Open. In the G
 you confirmed independently. All saved outputs refuse to overwrite existing
 files, including decrypted documents. A package is limited to a 16 MiB
 plaintext and a 24 MiB `.sdoc` file; both CLI and GUI use the same bounds.
+The Appearance selector offers system, light and dark themes for the current
+session. File operations run off the UI thread; close waits for an active
+operation to finish. Icons are locally bundled Lucide SVGs (ISC; see
+`securedoc/gui/icons/LICENSE`), never fetched at runtime. PySide6-Essentials
+is LGPLv3-licensed; the project code remains MIT-licensed. The layout follows
+[Qt's accessibility guidance](https://doc.qt.io/qt-6/accessible.html) on
+keyboard navigation, labels, and contrast; native assistive-technology and
+platform appearance still need testing.
+See [desktop UI decisions and verification](docs/GUI.md) for design sources
+and native testing limits.
 
 **Protect your environment:** Use strong, unique key passwords, separate
 storage/backups for the CA key, and secure file permissions. On POSIX, encrypted
@@ -108,7 +118,8 @@ python -m black --check .
 ```
 
 Tests generate temporary keys and files; no real private keys or fixtures are
-tracked. A Linux development Dockerfile supports **headless CLI tests only**.
+tracked. Offscreen widget tests are skipped when Qt host libraries are absent.
+A Linux development Dockerfile supports **headless CLI/core tests only**.
 `docker build -t securedoc-nepal:dev .` then
 `docker run --rm --network none securedoc-nepal:dev python -m pytest -v`
 runs those tests; the default container command prints CLI help, not a GUI.

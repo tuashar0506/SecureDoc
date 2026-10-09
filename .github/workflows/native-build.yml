@@ -30,13 +30,13 @@ jobs:
           python-version: '3.13'
           cache: pip
           cache-dependency-path: pyproject.toml
-      - name: Install Linux Tk libraries
+      - name: Install Linux Qt display support
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y tk8.6 libtk8.6 python3-tk xvfb xauth
+        run: sudo apt-get update && sudo apt-get install -y xvfb xauth libgl1 libegl1 libxkbcommon-x11-0 libxcb-cursor0
       - name: Install project, test and packaging tools
         run: python -m pip install -e ".[dev,build]"
-      - name: Check native Tk availability
-        run: python -c "import tkinter; print('Tk', tkinter.TkVersion)"
+      - name: Check Qt availability
+        run: python -c "from PySide6.QtWidgets import QApplication; from PySide6.QtSvg import QSvgRenderer; print('Qt bindings available')"
       - name: Run security and workflow tests
         run: python -m pytest -v
       - name: Check code quality

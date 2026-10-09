@@ -7,7 +7,7 @@ passwords, keys or certificates are uploaded.
 
 `.github/workflows/native-build.yml` runs on pushes to `main`, pull requests,
 manual dispatch and `v*` tags.
-It installs Python 3.13, verifies Tk can be imported, runs the full test suite
+It installs Python 3.13, verifies PySide6 Qt can be imported, runs the full test suite
 and checks style on **each** native runner. `scripts/build.py` runs PyInstaller
 locally on each runner: a GUI bundle plus a separate console CLI bundle; it
 smoke-tests the **bundled CLI** using `--help` and briefly launches the **bundled
@@ -33,7 +33,7 @@ protect/open round trip, verify no runtime key/certificate/plaintext exists in
 the archive, and inspect OS-specific permissions and antivirus/quarantine
 behavior. On macOS, quarantine and unsigned-app warnings are expected until
 codesigning and notarization are arranged. On Linux, ensure the target system
-has the required Tk/display libraries. No installer, application icon, or
+has the required Qt/display libraries. No installer, application icon, or
 automatic updater is included. Do not publish as a finished security product;
 the offline tool has no revocation enforcement or real-world identity vetting.
 
@@ -47,8 +47,9 @@ python -m pip install -e '.[dev,build]'
 python scripts/build.py
 ```
 
-The last two commands require Tkinter support and PyInstaller, neither of
-which is present in this checkout's current Linux environment. Install project
-Python dependencies only in `.venv`; the native Tk library may require a
-system package matching the Python interpreter. Do not assume success on a
-platform that was not run.
+The last two commands require PyInstaller and a working Qt installation and
+display (Xvfb is used for the Linux smoke test). Install project Python
+dependencies only in `.venv`; Linux Qt display libraries may require system
+packages. A local Linux bundle and offscreen GUI smoke launch succeeded using
+temporary extracted libraries outside the repository. That does not verify an
+ordinary host installation, native X11/Wayland display, or Windows/macOS builds.

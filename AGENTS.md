@@ -28,7 +28,7 @@ exists. Check executable code and meaningful tests first.
 
 - `securedoc/crypto/`: focused cryptographic operations; `security/`:
   pinned-root validation (revocation/replay remain unimplemented); `services/`:
-  CLI/GUI shared workflows; `gui/`: desktop Tk interface, native display
+  CLI/GUI shared workflows; `gui/`: desktop Qt interface, native display
   behavior not verified until a real native runner launches it.
 - Add tests for successful use *and* wrong password, tampering, forged input,
   wrong identity, and malformed data where relevant.
@@ -51,7 +51,7 @@ exists. Check executable code and meaningful tests first.
 
 Implemented core: RSA key storage, X.509 issuance, pinned-root direct-chain
 and expiry validation, signed and encrypted single-recipient `.sdoc` files,
-CLI and native Tk GUI. Pending: local revocation enforcement, GUI/native build
+CLI and Qt GUI. Pending: local revocation enforcement, GUI/native build
 verification on all platforms, optional X25519, Security Lab and any claims
 of production security. No authenticated network request workflow exists, so
 request replay protection is not applicable to the present offline file tool.

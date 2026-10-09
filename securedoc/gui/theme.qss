@@ -1,0 +1,23 @@
+QWidget { background: $bg; color: $text; font-size: 13px; }
+QLabel { background: transparent; }
+QFrame#side { background: $sidebar; border-right: 1px solid $border; }
+QLabel#brand { font-size: 15px; font-weight: 800; letter-spacing: 1px; }
+QLabel#eyebrow { color: $accent; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+QLabel#sidebarNote, QLabel#hint, QLabel#subtitle { color: $muted; }
+QLabel#topTitle { font-weight: 600; }
+QLabel#heading { font-size: 29px; font-weight: 700; }
+QLabel#cardTitle { font-size: 16px; font-weight: 700; }
+QFrame#card { background: $surface; border: 1px solid $border; border-radius: 12px; }
+QFrame#card QLabel { background: transparent; }
+QLineEdit, QComboBox { background: $surface; border: 1px solid $border; border-radius: 7px; padding: 8px 10px; selection-background-color: $accent; }
+QLineEdit:focus, QComboBox:focus, QPushButton:focus { border: 2px solid $accent; }
+QLineEdit::placeholder { color: $muted; }
+QPushButton { border-radius: 7px; padding: 8px 14px; font-weight: 600; }
+QPushButton#secondary { background: $soft; color: $text; border: 1px solid $border; }
+QPushButton#secondary:hover, QPushButton#nav:hover { background: $soft; }
+QPushButton#primary { background: $accent; color: $primary_text; }
+QPushButton#primary:disabled { background: $muted; }
+QPushButton#nav { text-align: left; color: $muted; border: 1px solid transparent; }
+QPushButton#nav[selected="true"] { background: $soft; color: $accent; border-left: 3px solid $accent; }
+QLabel#status { background: $soft; color: $text; border-radius: 7px; padding: 10px; }
+QScrollArea { border: none; }

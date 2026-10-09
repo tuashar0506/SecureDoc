@@ -24,9 +24,9 @@ def main() -> None:
     if tag and tag != f"v{VERSION}":
         raise SystemExit("Tag must match pyproject.toml version.")
     try:
-        import tkinter  # noqa: F401 - PyInstaller needs a working native Tk
+        import PySide6.QtSvg  # noqa: F401 - Verify Qt bindings before packaging
     except ImportError as exc:
-        raise SystemExit("Native Tk support is required to build the GUI.") from exc
+        raise SystemExit("PySide6-Essentials is required to build the GUI.") from exc
 
     for name, entry, windowed in (
         ("SecureDoc-Nepal", "app.py", True),
@@ -49,7 +49,16 @@ def main() -> None:
             str(ROOT / "build"),
         ]
         if windowed:
-            args.append("--windowed")
+            gui_assets = ROOT / "securedoc" / "gui"
+            args.extend(
+                [
+                    "--windowed",
+                    "--add-data",
+                    f"{gui_assets / 'icons'}{os.pathsep}securedoc/gui/icons",
+                    "--add-data",
+                    f"{gui_assets / 'theme.qss'}{os.pathsep}securedoc/gui",
+                ]
+            )
         subprocess.run([*args, entry], cwd=ROOT, check=True)
 
     exe = ".exe" if os.name == "nt" else ""

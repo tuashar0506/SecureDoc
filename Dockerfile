@@ -21,5 +21,5 @@ COPY tests/ ./tests/
 RUN python -m pip install --no-cache-dir -r requirements.txt
 
 USER securedoc
-# No display/Tk in this test image; print headless CLI help by default.
+# No display in this test image; print headless CLI help by default.
 CMD ["python", "app.py", "--help"]
